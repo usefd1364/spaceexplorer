@@ -311,3 +311,14 @@ Made with love by usefd1364
 
 Live Demo: https://usefd1364.github.io/spaceexplorer/
 GitHub: https://github.com/usefd1364/spaceexplorer
+
+---
+
+## 🛡️ Security & VirusTotal False Positives
+
+If you scan this project's Admin Panel URL on VirusTotal, **some security vendors (like LevelBlue) may flag it as "Phishing" (usually 1/92).**
+
+### Why does this happen?
+This is a **False Positive**. The admin panel features a password lock screen. Because this project is hosted on a free `github.io` domain, automated security scanners often mistake any login screen on free hosting for a credential harvesting/phishing site. 
+
+This project does **not** collect your data, and the source code is entirely open and contained in `index.html` for you to verify. The password mechanism is entirely client-side JavaScript.
