@@ -1,4 +1,4 @@
-﻿# Space Explorer — AI Holographic Solar System Interface
+# Space Explorer — AI Holographic Solar System Interface
 
 A fully interactive, 3D Solar System Explorer controlled by hand gestures, touch, and keyboard — built with Three.js and Google MediaPipe AI hand tracking.
 
@@ -317,6 +317,8 @@ GitHub: https://github.com/usefd1364/spaceexplorer
 ## 🛡️ Security & VirusTotal False Positives
 
 If you scan this project's Admin Panel URL on VirusTotal, **some security vendors (like LevelBlue) may flag it as "Phishing" (usually 1/92).**
+
+![VirusTotal False Positive](virustotal-false-positive.png)
 
 ### Why does this happen?
 This is a **False Positive**. The admin panel features a password lock screen. Because this project is hosted on a free `github.io` domain, automated security scanners often mistake any login screen on free hosting for a credential harvesting/phishing site. 
