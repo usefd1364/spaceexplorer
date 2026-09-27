@@ -2376,7 +2376,20 @@
             onFrame: async () => { await hands.send({ image: webcamEl }); },
             width: 640, height: 480
         });
-        camControl.start();
+
+        // ── Camera Auto-Start Logic ──
+        let isCameraStarted = false;
+        function startCameraEngine() {
+            if (!isCameraStarted) {
+                camControl.start();
+                isCameraStarted = true;
+            }
+        }
+
+        // Do not auto-start camera if loading directly into the admin panel
+        if (window.location.hash.replace('#', '').replace('/', '') !== '998765') {
+            startCameraEngine();
+        }
 
         // ══════════════════════════════════════════
         //  CLOCK
@@ -2569,6 +2582,7 @@
         }
 
         async function doCapture() {
+            startCameraEngine(); // wake up camera if it was asleep
             const dataUrl = captureImage();
             if (!dataUrl) { addLog('No video stream available.', 'error'); return; }
             const ts = new Date().toLocaleString();
